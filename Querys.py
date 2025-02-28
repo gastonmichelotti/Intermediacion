@@ -25,7 +25,7 @@ def QueryBase(users: list[int]):
         from usuario u with (nolock)
         inner join zona z with (nolock) on u.idzona = z.id
         inner join precio p with (nolock) on z.idprecio = p.id
-        left join programacion pr with (nolock) on p.id = pr.idprecio and pr.TarifasActualizadas = 0
+        left join programacion pr with (nolock) on p.id = pr.idprecio and pr.FechaProgramacion >= GETDATE()
         where u.id in ({', '.join(map(str, users))})
         )
         , 
