@@ -21,22 +21,21 @@ def obtener_datos_base(users: list[int]):
     return result
 
 
-def calcular_margen(base: pd.DataFrame, difeCostoIntermediacion: float, extra3hs: float, extraGBA: float, precio: float):
+def calcular_margen(base: pd.DataFrame, difeCostoInter: dict, extra3hs: float, extraGBA: float, precio: float):
 
     costoTotal = sum(
-        base['PrecioMotoboyHoraSemanaDiaZona'] * (1 + difeCostoIntermediacion) * base['QHora3SemanaDia'] * (1 + extra3hs) +
-        base['PrecioMotoboyHoraSemanaDiaZona'] * (1 + difeCostoIntermediacion) * base['QHora4SemanaDia'] +
-        base['PrecioMotoboyHoraFindeDiaZona'] * (1 + difeCostoIntermediacion) * base['QHora3FindeDia'] * (1 + extra3hs) +
-        base['PrecioMotoboyHoraFindeDiaZona'] * (1 + difeCostoIntermediacion) * base['QHora4FindeDia'] +
-        base['PrecioMotoboyHora3SemanaNocheZona'] * (1 + difeCostoIntermediacion) * base['QHora3SemanaNoche'] +
-        base['PrecioMotoboyHora4SemanaNocheZona'] * (1 + difeCostoIntermediacion) * base['QHora4SemanaNoche'] +
-        base['PrecioMotoboyHora5SemanaNocheZona'] * (1 + difeCostoIntermediacion) * base['QHora5SemanaNoche'] +
-        base['PrecioMotoboyHora6SemanaNocheZona'] * (1 + difeCostoIntermediacion) * base['QHora6SemanaNoche'] +
-        base['PrecioMotoboyHora3FindeNocheZona'] * (1 + difeCostoIntermediacion) * base['QHora3FindeNoche'] +
-        base['PrecioMotoboyHora4FindeNocheZona'] * (1 + difeCostoIntermediacion) * base['QHora4FindeNoche'] +
-        base['PrecioMotoboyHora5FindeNocheZona'] * (1 + difeCostoIntermediacion) * base['QHora5FindeNoche'] +
-        base['PrecioMotoboyHora6FindeNocheZona'] *
-        (1 + difeCostoIntermediacion) * base['QHora6FindeNoche']
+        base['PrecioMotoboyHoraSemanaDiaZona'] * (1 + difeCostoInter.get('mediodia', 0)) * base['QHora3SemanaDia'] * (1 + extra3hs) +
+        base['PrecioMotoboyHoraSemanaDiaZona'] * (1 + difeCostoInter.get('mediodia', 0)) * base['QHora4SemanaDia'] +
+        base['PrecioMotoboyHoraFindeDiaZona'] * (1 + difeCostoInter.get('mediodia', 0)) * base['QHora3FindeDia'] * (1 + extra3hs) +
+        base['PrecioMotoboyHoraFindeDiaZona'] * (1 + difeCostoInter.get('mediodia', 0)) * base['QHora4FindeDia'] +
+        base['PrecioMotoboyHora3SemanaNocheZona'] * (1 + difeCostoInter.get('semana_noche', 0)) * base['QHora3SemanaNoche'] +
+        base['PrecioMotoboyHora4SemanaNocheZona'] * (1 + difeCostoInter.get('semana_noche', 0)) * base['QHora4SemanaNoche'] +
+        base['PrecioMotoboyHora5SemanaNocheZona'] * (1 + difeCostoInter.get('semana_noche', 0)) * base['QHora5SemanaNoche'] +
+        base['PrecioMotoboyHora6SemanaNocheZona'] * (1 + difeCostoInter.get('semana_noche', 0)) * base['QHora6SemanaNoche'] +
+        base['PrecioMotoboyHora3FindeNocheZona'] * (1 + difeCostoInter.get('finde_noche', 0)) * base['QHora3FindeNoche'] +
+        base['PrecioMotoboyHora4FindeNocheZona'] * (1 + difeCostoInter.get('finde_noche', 0)) * base['QHora4FindeNoche'] +
+        base['PrecioMotoboyHora5FindeNocheZona'] * (1 + difeCostoInter.get('finde_noche', 0)) * base['QHora5FindeNoche'] +
+        base['PrecioMotoboyHora6FindeNocheZona'] * (1 + difeCostoInter.get('finde_noche', 0)) * base['QHora6FindeNoche']
     )
 
     IngresoTotal = sum((precio * (1 + extraGBA) if gba else precio) * (hs3sd + hs4sd + hs3fd + hs4fd + hs3sn + hs4sn + hs5sn + hs6sn + hs3fn + hs4fn + hs5fn + hs6fn)
@@ -49,14 +48,13 @@ def calcular_margen(base: pd.DataFrame, difeCostoIntermediacion: float, extra3hs
 
     return costoTotal, IngresoTotal, margen
 
-
-def optimizar_precio(base: pd.DataFrame, difeCostoIntermediacion: float, extra3hs: float, extraGBA: float, margenFinal: float):
+def optimizar_precio(base: pd.DataFrame, difeCostoInter: dict, extra3hs: float, extraGBA: float, margenFinal: float):
     """
     Optimiza el valor de precio para obtener un margen final específico.
 
     Args:
         base: DataFrame con los datos base
-        difeCostoIntermediacion: Diferencial de costo de intermediación
+        difeCostoInter: Diccionario con los diferenciales de costo por intermediación
         extraGBA: Porcentaje extra para GBA
         extra3hs: Porcentaje extra para 3 horas
         margenFinal: Margen final deseado
@@ -67,7 +65,7 @@ def optimizar_precio(base: pd.DataFrame, difeCostoIntermediacion: float, extra3h
 
     def objetivo(precio):
         _, _, margen = calcular_margen(
-            base, difeCostoIntermediacion, extra3hs, extraGBA, precio[0])
+            base, difeCostoInter, extra3hs, extraGBA, precio[0])
         return abs(margen - margenFinal)
 
     # Valor inicial para la optimización
@@ -88,7 +86,7 @@ def optimizar_precio(base: pd.DataFrame, difeCostoIntermediacion: float, extra3h
         precio_optimo = resultado.x[0]
         # Verificar que realmente se optimizó
         _, _, margen_obtenido = calcular_margen(
-            base, difeCostoIntermediacion, extra3hs, extraGBA, precio_optimo)
+            base, difeCostoInter, extra3hs, extraGBA, precio_optimo)
         print(
             f"Margen objetivo: {margenFinal}, Margen obtenido: {margen_obtenido}, Precio: {precio_optimo}")
         return precio_optimo
