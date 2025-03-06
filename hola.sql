@@ -23,7 +23,7 @@
     inner join zona z with (nolock) on u.idzona = z.id
     inner join precio p with (nolock) on z.idprecio = p.id
     left join programacion pr with (nolock) on p.id = pr.idprecio and pr.FechaProgramacion >= GETDATE()
-    where u.id in (20307, 30984, 21626, 26274, 14264, 28888)
+    where u.id in (31425, 5660, 7731, 5312, 7900, 32920, 7819, 7786)
     )
     , 
     -- select * from PreciosZonas
@@ -47,7 +47,7 @@
     where 
     (r.cancelada = 0 or (r.cancelada = 1 and r.IdMotivoCancelada = 5))
     and r.fecha >= DATEADD(WEEK, -4, DATEADD(WEEK, DATEDIFF(WEEK, 0, GETDATE()), 0))
-    and u.id in (20307, 30984, 21626, 26274, 14264, 28888)
+    and u.id in (31425, 5660, 7731, 5312, 7900, 32920, 7819, 7786)
     group by u.id
     )
     select 
