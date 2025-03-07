@@ -10,6 +10,7 @@ import pyodbc
 from datetime import datetime
 from config import engine
 from Querys import QueryBase
+import os
 
 
 def obtener_datos_base(users: list[int]):
@@ -113,7 +114,7 @@ def optimizar_precio(base: pd.DataFrame, difeCostoInter: dict, extra3hs: float, 
             raise ValueError(
                 "La optimización no convergió. Intente con otros parámetros iniciales.")
 
-def obtener_montos_motoboy(base: pd.DataFrame, extra3hs: float, transpose: bool = True):
+def obtener_montos_motoboy(base: pd.DataFrame, extra3hs: float, cliente: str, transpose: bool = True):
 
     # Calcular precios para 3 horas
     base["PrecioMotoboyHora3SemanaDia"] = base["PrecioMotoboyHoraSemanaDia"] * (1 + extra3hs)
@@ -152,13 +153,11 @@ def obtener_montos_motoboy(base: pd.DataFrame, extra3hs: float, transpose: bool 
         # Reemplazar el dataframe original
         base = df_transpuesto
 
-    # Obtener el nombre del DataFrame original
-    nombre_df = [var_name for var_name, var_val in globals().items() if isinstance(var_val, pd.DataFrame) and var_val is base][0]
     
     # Crear el directorio exports si no existe
     if not os.path.exists('exports'):
         os.makedirs('exports')
         
     # Exportar a Excel
-    base.to_excel(f'exports/MontosMotoboy_{nombre_df}.xlsx', index=False)
+    base.to_excel(f'exports/MontosMotoboy_{cliente}.xlsx', index=False)
     return base
