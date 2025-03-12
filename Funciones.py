@@ -14,12 +14,23 @@ import os
 
 
 def obtener_datos_base(users: list[int]):
+    try:
+        query = QueryBase(users)
+        result = pd.read_sql(query, engine) 
 
-    query = QueryBase(users)
+        return result
+    except Exception as e:
+        # Asegurarte de hacer rollback
+        if 'session' in locals():
+            requests.session.rollback()
+        print(f"Error: {e}")
+        raise
+    finally:
+        # Cerrar sesión si existe
+        if 'session' in locals():
+            requests.session.close()
 
-    result = pd.read_sql(query, engine)
-
-    return result
+    
 
 def calcular_margen(base: pd.DataFrame, difeCostoInter: dict, extra3hs: float, extraGBA: float, precio: float):
 
